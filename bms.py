@@ -135,5 +135,4 @@ def bms_scrapper(watching, destinations, listing_dates, history):
 
 bms_scrapper(watching, destinations, listing_dates, history)
 
-
-#history.to_csv('history.csv', index=False)
+history.to_csv('history.csv', index=False)
