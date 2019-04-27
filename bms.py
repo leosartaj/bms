@@ -130,9 +130,12 @@ def bms_scrapper(watching, destinations, listing_dates, history):
                                           available_times)
                     available_times = list(available_times)
                     movies[movie_name].append((frm_date, dest, available_times))
-    notify(emails, movies)
+    if len(movies):
+        notify(emails, movies)
+
+    return history
 
 
-bms_scrapper(watching, destinations, listing_dates, history)
+history = bms_scrapper(watching, destinations, listing_dates, history)
 
 history.to_csv('history.csv', index=False)
