@@ -51,8 +51,8 @@ headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11'
        'Connection': 'keep-alive'}
 
 
-with open('auth.txt') as f:
-    gmail_user, gmail_password = f.read().strip('\n').split('\n')
+BMS_USER = os.environ['BMS_USER']
+BMS_PASS = os.environ['BMS_PASS']
 
 
 with open('email_list.txt', 'r') as f:
@@ -61,7 +61,7 @@ with open('email_list.txt', 'r') as f:
 try:
     server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
     server.ehlo()
-    server.login(gmail_user, gmail_password)
+    server.login(BMS_USER, BMS_PASS)
 except:
     raise ValueError('Something went wrong while connecting to gmail...')
 
@@ -80,7 +80,7 @@ def notify(emails, movies):
     msg = EmailMessage()
     msg.set_content(body)
     msg['Subject'] = subject
-    msg['From'] = gmail_user
+    msg['From'] = BMS_USER
     msg['To'] = emails
 
     server.send_message(msg)

@@ -19,6 +19,15 @@ Name of movies to watch for.
 
 Contains theater name and url to notify from.
 
+For specifying email account to use for sending notification
+ (only gmail tested ).
+
+
+Define the following environment variables
+
+export BMS\_USER=email@domain.com
+export BMS\_PASS=password
+
 See examples directory for example files.
 
 #### Docker image can be used to launch the script
