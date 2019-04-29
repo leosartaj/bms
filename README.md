@@ -31,3 +31,9 @@ export BMS\_PASS=password
 See examples directory for example files.
 
 #### Docker image can be used to launch the script
+
+Use the following command for running the image
+
+docker run --name bms\_demo -v $PWD:/bms/data -e BMS\_USER -e BMS\_PASS bms:latest
+
+for this example to work your pwd should contain email\_list.txt, movies.txt and theaters.txt

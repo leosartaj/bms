@@ -11,11 +11,11 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 
-with open('movies.txt') as f:
+with open('data/movies.txt') as f:
     watching = f.read().strip('\n').split('\n')
 
 destinations = {}
-with open('theaters.txt') as f:
+with open('data/theaters.txt') as f:
     for line in f:
         dest, url = line.split(',')
         destinations[dest.strip(' ')] = url.strip('\n').strip(' ')
@@ -40,7 +40,7 @@ def get_date(date, offset=None):
 
 listing_dates = [get_date(now, offset=i) for i in range(check_days)]
 
-history_file = '.bms_history.csv'
+history_file = 'data/.bms_history.csv'
 if os.path.isfile(history_file):
     history = pd.read_csv(history_file)
 else:
@@ -61,7 +61,7 @@ BMS_USER = os.environ['BMS_USER']
 BMS_PASS = os.environ['BMS_PASS']
 
 
-with open('email_list.txt', 'r') as f:
+with open('data/email_list.txt', 'r') as f:
     emails = f.read().strip('\n').split('\n')
 
 try:
