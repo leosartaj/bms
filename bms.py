@@ -40,7 +40,13 @@ def get_date(date, offset=None):
 
 listing_dates = [get_date(now, offset=i) for i in range(check_days)]
 
-history = pd.read_csv('history.csv')
+history_file = '.bms_history.csv'
+if os.path.isfile(history_file):
+    history = pd.read_csv(history_file)
+else:
+    #history = pd.DataFrame([[listing_dates[0], 'demo', 'mall']], columns=['date',
+                                                                #'movie', 'dest'])
+    history = pd.DataFrame([], columns=['date', 'movie', 'dest'])
 
 headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11'
            '(KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
@@ -131,11 +137,12 @@ def bms_scrapper(watching, destinations, listing_dates, history):
                     available_times = list(available_times)
                     movies[movie_name].append((frm_date, dest, available_times))
     if len(movies):
-        notify(emails, movies)
+        pass
+        #notify(emails, movies)
 
     return history
 
 
 history = bms_scrapper(watching, destinations, listing_dates, history)
 
-history.to_csv('history.csv', index=False)
+history.to_csv(history_file, index=False)
