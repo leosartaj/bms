@@ -1,3 +1,4 @@
+import argparse
 import os
 import time
 from collections import defaultdict
@@ -150,20 +151,48 @@ def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='BookMyShow movie listing'
+                                     ' notifier.')
+
+    parser.add_argument('movies_list', help='List of movies to watch for')
+    parser.add_argument('theaters_list', help='Theaters to check for listings')
+
+    parser.add_argument('-e', '--emails_list', help='List of emails to notify',
+                        default=False)
+    parser.add_argument('-u', '--user', help='Account to use for sending emails',
+                        default=False)
+    parser.add_argument('-p', '--psw', help='password of account to use for '
+                        'sending emails',
+                        default=False)
+
+    parser.add_argument('-c', '--cache', help='History file to use',
+                        default='.bms_history.csv')
+
+    parser.add_argument('-d', '--days', help='Number of days to check for'
+                        ' (default is today i.e 1)', type=int, default=1)
+    args = parser.parse_args()
+
+    movies_list = args.movies_list
+    theaters_list = args.theaters_list
+
     is_notify = False
-    BMS_USER = os.environ['BMS_USER']
-    BMS_PASS = os.environ['BMS_PASS']
+    if args.emails_list:
+        is_notify = True
+        BMS_USER = args.user
+        BMS_PASS = args.psw
+        emails_list = args.emails_list
+    else:
+        emails_list=None
 
-    movies_list = 'data/movies.txt'
-    theaters_list = 'data/theaters.txt'
-    emails_list = 'data/emails_list.txt'
-    watching, theaters, emails = load_data(movies_list, theaters_list, emails_list)
+    watching, theaters, emails = load_data(movies_list, theaters_list,
+                                           emails_list)
 
-    history_file = 'data/.bms_scrapper.csv'
+    history_file = args.cache
     history = load_history(history_file)
 
-    listing_dates = get_listing_dates()
+    listing_dates = get_listing_dates(check_days=args.days)
 
-    history = bms_scrapper(watching, theaters, listing_dates, history, is_notify=is_notify)
+    history = bms_scrapper(watching, theaters, listing_dates, history,
+                           is_notify=is_notify)
 
     history.to_csv(history_file, index=False)
