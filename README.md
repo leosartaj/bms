@@ -49,3 +49,4 @@ Use the following command for running the image
 `docker run --name bms1 -v $PWD:/bms/data -e BMS\_USER -e BMS\_PASS --rm leosartaj/bms:latest`
 
 for this example to work your pwd should contain email\_list.txt, movies.txt and theaters.txt
+
