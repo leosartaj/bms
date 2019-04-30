@@ -30,7 +30,17 @@ export BMS\_PASS=password
 
 See examples directory for example files.
 
-#### Docker image can be used to launch the script
+#### Usage
+
+Can invoke the script directly using python 3.
+
+python bms.py --help
+
+eg.
+
+`python bms.py movies_list.txt theaters_list.txt -e EMAIL -u USERNAME -p PASS`
+
+You can also run it using the docker image
 
 Use the following command for running the image
 
