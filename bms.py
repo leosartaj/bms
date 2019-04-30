@@ -102,6 +102,7 @@ def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False
         'Connection': 'keep-alive'}
 
     movies = defaultdict(list)
+    completed = False
     for date in listing_dates:
         frm_date = '{}-{}-{}'.format(date[-2:], date[4:6], date[:4])
         for movie_name in watching:
@@ -115,6 +116,7 @@ def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False
                 movie_date_info = requests.get(movie_date_url, params=headers)
                 if date not in movie_date_info.url:
                     print('{} not listed for {}'.format(movie_name, frm_date))
+                    completed = True
                     break
                 movie_date_html = BeautifulSoup(movie_date_info.text, features='lxml')
                 containers = movie_date_html.find_all('div', attrs={'class': 'container'})
@@ -144,6 +146,9 @@ def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False
                                           available_times)
                     available_times = list(available_times)
                     movies[movie_name].append((frm_date, dest, available_times))
+        else:
+            if completed:
+                break
     if len(movies) and is_notify:
         notify(emails, movies)
 
