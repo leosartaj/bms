@@ -14,4 +14,6 @@ COPY bms.py /bms/bms.py
 
 WORKDIR /bms
 
-CMD ["python3", "bms.py"]
+CMD ["python3", "bms.py", "data/movies.txt", \
+    "data/theaters.txt", "-e", "data/emails.txt", \
+     "-c", "data/.bms_history.csv", "-d", "10"]

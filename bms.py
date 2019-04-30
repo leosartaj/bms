@@ -26,7 +26,7 @@ def load_data(movies_list, theaters_list, email_list):
         url = '{}/'.format(url.rstrip('/'))
         theaters[theater] = url
 
-    with open('data/email_list.txt', 'r') as f:
+    with open(email_list) as f:
         emails = f.read().strip('\n').split('\n')
 
     return watching, theaters, emails
@@ -178,8 +178,14 @@ if __name__ == '__main__':
     is_notify = False
     if args.emails_list:
         is_notify = True
-        BMS_USER = args.user
-        BMS_PASS = args.psw
+        if args.user:
+            BMS_USER = args.user
+        else:
+            BMS_USER = os.environ['BMS_USER']
+        if args.psw:
+            BMS_PASS = args.psw
+        else:
+            BMS_PASS = os.environ['BMS_PASS']
         emails_list = args.emails_list
     else:
         emails_list=None

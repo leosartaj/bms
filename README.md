@@ -7,7 +7,7 @@ Email notification for Book My Show when movie is listed.
 
 Two files need to be defined to start using the script.
 
-- email\_list.txt
+- emails.txt
 
 List of emails to notify, with each email on newline.
 
@@ -22,11 +22,13 @@ Contains theater name and url to notify from.
 For specifying email account to use for sending notification
  (only gmail tested ).
 
-
 Define the following environment variables
 
 export BMS\_USER=email@domain.com
 export BMS\_PASS=password
+
+optionally you can also pass it in
+as a command line argument when lauching script.
 
 See examples directory for example files.
 
