@@ -11,21 +11,24 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 
-with open('data/movies.txt') as f:
-    watching = f.read().strip('\n').split('\n')
+def load_data(movies_list, theaters_list, email_list):
+    with open(movies_list) as f:
+        watching = f.read().strip('\n').split('\n')
 
-destinations = {}
-with open('data/theaters.txt') as f:
-    for line in f:
-        dest, url = line.split(',')
-        destinations[dest.strip(' ')] = url.strip('\n').strip(' ')
+    theaters = {}
+    with open(theaters_list) as f:
+        for line in f:
+            theater, url = line.split(',')
+            theaters[theater.strip(' ')] = url.strip('\n').strip(' ')
 
-for dest, dest_url in destinations.items():
-    dest_url = '{}/'.format(dest_url.rstrip('/'))
-    destinations[dest] = dest_url
+    for theater, url in theaters.items():
+        url = '{}/'.format(url.rstrip('/'))
+        theaters[theater] = url
 
-now = datetime.datetime.now()
-check_days = 7
+    with open('data/email_list.txt', 'r') as f:
+        emails = f.read().strip('\n').split('\n')
+
+    return watching, theaters, emails
 
 
 def get_date(date, offset=None):
@@ -38,41 +41,37 @@ def get_date(date, offset=None):
     date = '{:04d}{:02d}{:02d}'.format(year, month, day)
     return date
 
-listing_dates = [get_date(now, offset=i) for i in range(check_days)]
 
-history_file = 'data/.bms_history.csv'
-if os.path.isfile(history_file):
-    history = pd.read_csv(history_file)
-else:
-    #history = pd.DataFrame([[listing_dates[0], 'demo', 'mall']], columns=['date',
-                                                                #'movie', 'dest'])
-    history = pd.DataFrame([], columns=['date', 'movie', 'dest'])
-
-headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11'
-           '(KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
-       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-       'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-       'Accept-Encoding': 'none',
-       'Accept-Language': 'en-US,en;q=0.8',
-       'Connection': 'keep-alive'}
+def get_listing_dates(check_days=7):
+    now = datetime.datetime.now()
+    listing_dates = [get_date(now, offset=i) for i in range(check_days)]
+    return listing_dates
 
 
-BMS_USER = os.environ['BMS_USER']
-BMS_PASS = os.environ['BMS_PASS']
+def load_history(history_file):
+    if os.path.isfile(history_file):
+        history = pd.read_csv(history_file)
+    else:
+        history = pd.DataFrame([], columns=['date', 'movie', 'dest'])
+
+    return history
 
 
-with open('data/email_list.txt', 'r') as f:
-    emails = f.read().strip('\n').split('\n')
 
-try:
-    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-    server.ehlo()
-    server.login(BMS_USER, BMS_PASS)
-except:
-    raise ValueError('Something went wrong while connecting to gmail...')
+def connect_server(user, psw):
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.ehlo()
+        server.login(user, psw)
+    except:
+        raise ValueError('Something went wrong while connecting to gmail...')
+
+    return server
 
 
 def notify(emails, movies):
+    server = connect_server(BMS_USER, BMS_PASS)
+
     movie_names = ','.join(movies.keys())
     subject = 'New Listings for {}'.format(movie_names)
 
@@ -92,7 +91,15 @@ def notify(emails, movies):
     server.send_message(msg)
 
 
-def bms_scrapper(watching, destinations, listing_dates, history):
+def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False):
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11'
+            '(KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'Accept-Encoding': 'none',
+        'Accept-Language': 'en-US,en;q=0.8',
+        'Connection': 'keep-alive'}
+
     movies = defaultdict(list)
     for date in listing_dates:
         frm_date = '{}-{}-{}'.format(date[-2:], date[4:6], date[:4])
@@ -136,13 +143,27 @@ def bms_scrapper(watching, destinations, listing_dates, history):
                                           available_times)
                     available_times = list(available_times)
                     movies[movie_name].append((frm_date, dest, available_times))
-    if len(movies):
-        pass
-        #notify(emails, movies)
+    if len(movies) and is_notify:
+        notify(emails, movies)
 
     return history
 
 
-history = bms_scrapper(watching, destinations, listing_dates, history)
+if __name__ == '__main__':
+    is_notify = False
+    BMS_USER = os.environ['BMS_USER']
+    BMS_PASS = os.environ['BMS_PASS']
 
-history.to_csv(history_file, index=False)
+    movies_list = 'data/movies.txt'
+    theaters_list = 'data/theaters.txt'
+    emails_list = 'data/emails_list.txt'
+    watching, theaters, emails = load_data(movies_list, theaters_list, emails_list)
+
+    history_file = 'data/.bms_scrapper.csv'
+    history = load_history(history_file)
+
+    listing_dates = get_listing_dates()
+
+    history = bms_scrapper(watching, theaters, listing_dates, history, is_notify=is_notify)
+
+    history.to_csv(history_file, index=False)
