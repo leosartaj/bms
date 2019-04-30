@@ -92,7 +92,8 @@ def notify(emails, movies):
     server.send_message(msg)
 
 
-def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False):
+def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False,
+                 verbose=False):
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11'
             '(KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -109,13 +110,16 @@ def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False
             for dest, dest_url in destinations.items():
                 logged = history.loc[(history['date'] == int(date))&(history['movie'] == movie_name)&(history['dest'] == dest), :]
                 if logged.shape[0] != 0:
-                    print('Already Notified for {}, {}'.format(frm_date, movie_name))
+                    if verbose:
+                        print('Already Notified for {}, {}'.format(frm_date,
+                                                                   movie_name))
                     continue
                 movie_date_url = '{}{}'.format(dest_url, date)
                 time.sleep(1)
                 movie_date_info = requests.get(movie_date_url, params=headers)
                 if date not in movie_date_info.url:
-                    print('{} not listed for {}'.format(movie_name, frm_date))
+                    if verbose:
+                        print('{} not listed for {}'.format(movie_name, frm_date))
                     completed = True
                     break
                 movie_date_html = BeautifulSoup(movie_date_info.text, features='lxml')
@@ -175,6 +179,9 @@ if __name__ == '__main__':
 
     parser.add_argument('-d', '--days', help='Number of days to check for'
                         ' (default is today i.e 1)', type=int, default=1)
+
+    parser.add_argument('--debug', action="store_true",
+                        help='verbose mode')
     args = parser.parse_args()
 
     movies_list = args.movies_list
@@ -204,6 +211,6 @@ if __name__ == '__main__':
     listing_dates = get_listing_dates(check_days=args.days)
 
     history = bms_scrapper(watching, theaters, listing_dates, history,
-                           is_notify=is_notify)
+                           is_notify=is_notify, verbose=args.debug)
 
     history.to_csv(history_file, index=False)
