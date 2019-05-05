@@ -3,3 +3,4 @@ theaters.txt
 movies.txt
 .bms_history.csv
 .ipynb_checkpoints/*
+__pycache__/*
