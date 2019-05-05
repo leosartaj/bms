@@ -53,7 +53,7 @@ def load_history(history_file):
     if os.path.isfile(history_file):
         history = pd.read_csv(history_file)
     else:
-        history = pd.DataFrame([], columns=['date', 'movie', 'dest'])
+        history = pd.DataFrame([], columns=['date', 'movie', 'dest', 'time'])
 
     return history
 
@@ -142,7 +142,8 @@ def bms_scrapper(watching, destinations, listing_dates, history, is_notify=False
                     listings = body.find_all('div')
                     available = filter(lambda listing: listing['data-oline'] == 'Y', listings)
                     available_times.extend(list(map(lambda listing: listing.text, available)))
-                history = history.append([{'movie': movie_name, 'date': int(date), 'dest': dest}])
+                history = history.append([{'movie': movie_name, 'date': int(date),
+                                           'dest': dest, 'times':available_times}])
                 if len(available_times):
 
                     available_times = map(lambda x: x[:x.find('M')+1], available_times)
