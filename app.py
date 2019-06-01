@@ -2,6 +2,7 @@ import atexit
 import flask
 from flask import request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
 import os
 import pandas as pd
 
@@ -43,17 +44,29 @@ def get_theaters():
     return jsonify(theaters)
 
 
-def scrape():
-    print('Test Scrape')
+@app.route('/listings', methods=['GET'])
+def listings():
+    return jsonify(LISTINGS)
 
 
-scrapper = Scrapper(WATCHING_PATH, THEATERS_PATH, HISTORY_PATH)
-notifier = Notifier(EMAILS_PATH, BMS_PASS, BMS_USER)
+def scrape_notify(scrapper, notifier):
+    listing_dates = scrapper.get_listing_dates()
+    movies = scrapper.scrape(listing_dates, verbose=True, save=True)
 
-# schedule scraping operation
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=scrape, trigger="interval", minutes=1)
-scheduler.start()
-atexit.register(lambda: scheduler.shutdown())
+    if len(movies):
+        scrapper.save_history()
 
-app.run()
+
+if __name__ == '__main__':
+    scrapper = Scrapper(WATCHING_PATH, THEATERS_PATH, HISTORY_PATH)
+    notifier = Notifier(EMAILS_PATH, BMS_PASS, BMS_USER)
+
+    # schedule scraping operation
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=scrape_notify, args=(scrapper, notifier),
+                      trigger="interval", seconds=10)
+    scheduler.start()
+    # cleanup at app stop time
+    atexit.register(lambda: scheduler.shutdown())
+
+    app.run()

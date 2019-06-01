@@ -3,6 +3,7 @@ import os
 import time
 from collections import defaultdict
 import datetime
+import json
 
 import smtplib
 from email.message import EmailMessage
@@ -49,6 +50,7 @@ class Scrapper(object):
             self.history_file = history_file
         else:
             self.history_file = HISTORY_DEFAULT
+        self.listings_file = '{}_listings.json'.format(self.history_file)
         self.load_history()
 
 
@@ -84,18 +86,27 @@ class Scrapper(object):
         if os.path.isfile(history_file):
             history = pd.read_csv(history_file)
         else:
-            history = pd.DataFrame([], columns=['date', 'movie', 'dest', 'time'])
+            history = pd.DataFrame([], columns=['date', 'movie', 'dest', 'times'])
 
         self.history = history
 
         return history
 
 
+    def load_listings(self):
+        with open(self.listings_file) as f:
+            self.listings = json.loads(f.read())
+
+
     def save_history(self):
         self.history.to_csv(self.history_file, index=False)
 
+        with open(self.listings_file) as f:
+            listings = json.dumps(self.listings)
+            f.write(listings)
 
-    def scrape(self, listing_dates, verbose=False, wait=1):
+
+    def scrape(self, listing_dates, verbose=False, wait=1, update=True):
         watching = self.watching
         destinations = self.theaters
         history = self.history
@@ -162,7 +173,9 @@ class Scrapper(object):
                     break
 
         # update history
-        self.history = history
+        if update:
+            self.history = history
+            self.listings = movies
 
         return movies
 
