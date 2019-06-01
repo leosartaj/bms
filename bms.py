@@ -12,6 +12,9 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 
+HISTORY_DEFAULT = '.bms_history.csv'
+
+
 def get_date(date, offset=None):
     if offset:
         offset_days = datetime.timedelta(days=offset)
@@ -24,7 +27,7 @@ def get_date(date, offset=None):
 
 
 class Scrapper(object):
-    def __init__(self, movies_list, theaters_list, history_file):
+    def __init__(self, movies_list, theaters_list, history_file=None):
         with open(movies_list) as f:
             watching = f.read().strip('\n').split('\n')
 
@@ -42,7 +45,10 @@ class Scrapper(object):
         self.theaters_list = theaters_list
         self.load_lists()
 
-        self.history_file = history_file
+        if history_file:
+            self.history_file = history_file
+        else:
+            self.history_file = HISTORY_DEFAULT
         self.load_history()
 
 
@@ -228,7 +234,7 @@ if __name__ == '__main__':
                         default=False)
 
     parser.add_argument('-c', '--cache', help='History file to use',
-                        default='.bms_history.csv')
+                        default=HISTORY_DEFAULT)
 
     parser.add_argument('-d', '--days', help='Number of days to check for'
                         ' (default is today i.e 1)', type=int, default=1)
