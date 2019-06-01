@@ -161,78 +161,55 @@ class Scrapper(object):
         return movies
 
 
-"""
-def load_data(movies_list, theaters_list, email_list):
-    with open(movies_list) as f:
-        watching = f.read().strip('\n').split('\n')
-
-    theaters = {}
-    with open(theaters_list) as f:
-        for line in f:
-            theater, url = line.split(',')
-            theaters[theater.strip(' ')] = url.strip('\n').strip(' ')
-
-    for theater, url in theaters.items():
-        url = '{}/'.format(url.rstrip('/'))
-        theaters[theater] = url
-
-    with open(email_list) as f:
-        emails = f.read().strip('\n').split('\n')
-
-    return watching, theaters, emails
-"""
+class Notifier(object):
+    def __init__(self, emails_list, user, psw):
+        self.emails_list = emails_list
+        self.user = user
+        self.psw = psw
+        self.load_emails()
 
 
-"""
-def get_listing_dates(check_days=7):
-    now = datetime.datetime.now()
-    listing_dates = [get_date(now, offset=i) for i in range(check_days)]
-    return listing_dates
-"""
+    def load_emails(self):
+        emails_list = self.emails_list
+        with open(emails_list) as f:
+            emails = f.read().strip('\n').split('\n')
+
+        self.emails = emails
 
 
-"""
-def load_history(history_file):
-    if os.path.isfile(history_file):
-        history = pd.read_csv(history_file)
-    else:
-        history = pd.DataFrame([], columns=['date', 'movie', 'dest', 'time'])
+    def connect_server(self):
+        try:
+            server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+            server.ehlo()
+            server.login(self.user, self.psw)
+        except:
+            raise ValueError('Something went wrong while connecting to gmail...')
 
-    return history
-"""
+        self.server = server
 
-
-def connect_server(user, psw):
-    try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.ehlo()
-        server.login(user, psw)
-    except:
-        raise ValueError('Something went wrong while connecting to gmail...')
-
-    return server
+        return server
 
 
-def notify(emails, movies):
-    server = connect_server(BMS_USER, BMS_PASS)
+    def notify(self, movies):
+        server = self.connect_server()
 
-    movie_names = ','.join(movies.keys())
-    subject = 'New Listings for {}'.format(movie_names)
+        movie_names = ','.join(movies.keys())
+        subject = 'New Listings for {}'.format(movie_names)
 
-    body = ''
-    for movie_name in movies.keys():
-        body += '{}\n'.format(movie_name)
-        for date, dest, times in movies[movie_name]:
-            times = ' '.join(times)
-            day = pd.to_datetime(date).day_name()
-            body += '{}, {}, {} => {}\n\n'.format(dest, day, date, times)
-    msg = EmailMessage()
-    msg.set_content(body)
-    msg['Subject'] = subject
-    msg['From'] = BMS_USER
-    msg['To'] = emails
+        body = ''
+        for movie_name in movies.keys():
+            body += '{}\n'.format(movie_name)
+            for date, dest, times in movies[movie_name]:
+                times = ' '.join(times)
+                day = pd.to_datetime(date).day_name()
+                body += '{}, {}, {} => {}\n\n'.format(dest, day, date, times)
+        msg = EmailMessage()
+        msg.set_content(body)
+        msg['Subject'] = subject
+        msg['From'] = self.user
+        msg['To'] = self.emails
 
-    server.send_message(msg)
+        server.send_message(msg)
 
 
 if __name__ == '__main__':
@@ -275,14 +252,20 @@ if __name__ == '__main__':
         else:
             BMS_PASS = os.environ['BMS_PASS']
         emails_list = args.emails_list
+
+        notifier = Notifier(emails_list, BMS_USER, BMS_PASS)
     else:
-        emails_list=None
+        emails_list = None
+        notifier = None
 
     history_file = args.cache
     scraper = Scrapper(movies_list, theaters_list, history_file)
 
     listing_dates = scraper.get_listing_dates(check_days=args.days)
 
-    data = scraper.scrape(listing_dates, verbose=args.debug)
+    movies = scraper.scrape(listing_dates, verbose=args.debug)
 
     scraper.save_history()
+
+    if emails_list and len(movies):
+        notifier.notify(movies)
