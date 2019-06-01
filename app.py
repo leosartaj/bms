@@ -1,6 +1,6 @@
 import atexit
 import flask
-from flask import request, jsonify
+from flask import request, jsonify, Flask, session
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import os
@@ -8,6 +8,8 @@ import pandas as pd
 
 from bms import Scrapper, Notifier, HISTORY_DEFAULT
 
+
+# Check Configuration section for more details
 # setup
 WATCHING_PATH = 'data/movies.txt'
 THEATERS_PATH = 'data/theaters.txt'
@@ -17,7 +19,7 @@ BMS_USER = os.environ['BMS_USER']
 BMS_PASS = os.environ['BMS_PASS']
 
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 app.config["DEBUG"] = True
 
 
@@ -46,15 +48,21 @@ def get_theaters():
 
 @app.route('/listings', methods=['GET'])
 def listings():
-    return jsonify(LISTINGS)
+    with open('data/.bms_history.csv_listings.json') as f:
+        ls = f.read()
+    with open('data/.bms_history.csv_updated.txt') as f:
+        updated = f.read()
+    result = '{}\n\n{}'.format(ls, updated)
+    return jsonify(result)
 
 
 def scrape_notify(scrapper, notifier):
     listing_dates = scrapper.get_listing_dates()
-    movies = scrapper.scrape(listing_dates, verbose=True, save=True)
+    movies = scrapper.scrape(listing_dates, verbose=True, update=True)
 
     if len(movies):
         scrapper.save_history()
+        #notifier.notify(movies)
 
 
 if __name__ == '__main__':
@@ -69,4 +77,5 @@ if __name__ == '__main__':
     # cleanup at app stop time
     atexit.register(lambda: scheduler.shutdown())
 
+    app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
     app.run()

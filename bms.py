@@ -51,6 +51,7 @@ class Scrapper(object):
         else:
             self.history_file = HISTORY_DEFAULT
         self.listings_file = '{}_listings.json'.format(self.history_file)
+        self.updated_file = '{}_updated.txt'.format(self.history_file)
         self.load_history()
 
 
@@ -101,9 +102,14 @@ class Scrapper(object):
     def save_history(self):
         self.history.to_csv(self.history_file, index=False)
 
-        with open(self.listings_file) as f:
+        with open(self.listings_file, 'w') as f:
             listings = json.dumps(self.listings)
             f.write(listings)
+
+        with open(self.updated_file, 'w') as f:
+            now = datetime.datetime.now()
+            now = '{}'.format(now)
+            f.write(now)
 
 
     def scrape(self, listing_dates, verbose=False, wait=1, update=True):
