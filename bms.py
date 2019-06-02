@@ -218,11 +218,12 @@ class Notifier(object):
     def notify(self, movies):
         server = self.connect_server()
 
-        movie_names = ','.join(movies.keys())
+        movies_keys = [m for m in movies.keys() if isinstance(movies[m], list)]
+        movie_names = ','.join(movies_keys)
         subject = 'New Listings for {}'.format(movie_names)
 
         body = ''
-        for movie_name in movies.keys():
+        for movie_name in movies_keys:
             body += '{}\n'.format(movie_name)
             for date, dest, times in movies[movie_name]:
                 times = ' '.join(times)

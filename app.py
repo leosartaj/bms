@@ -1,5 +1,5 @@
 import atexit
-import flask
+import json
 from flask import request, jsonify, Flask, session
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
@@ -19,8 +19,11 @@ LISTINGS_PATH = '{}_listings.json'.format(HISTORY_PATH)
 UPDATED_PATH = '{}_updated.txt'.format(HISTORY_PATH)
 BMS_USER = os.environ['BMS_USER']
 BMS_PASS = os.environ['BMS_PASS']
+# authentication params for actions
+BMS_ADMIN = os.environ['BMS_ADMIN']
+BMS_ROOT = os.environ['BMS_ROOT']
 SCRAPPER = Scrapper(WATCHING_PATH, THEATERS_PATH, HISTORY_PATH)
-NOTIFIER = Notifier(EMAILS_PATH, BMS_PASS, BMS_USER)
+NOTIFIER = Notifier(EMAILS_PATH, BMS_USER, BMS_PASS)
 
 
 app = Flask(__name__)
@@ -44,32 +47,56 @@ def get_theaters():
     return jsonify(theaters)
 
 
-import json
-@app.route('/listings', methods=['GET'])
-def listings():
+def get_listings():
     with open(LISTINGS_PATH) as f:
         ls = f.read()
         ls = json.loads(ls)
     with open(UPDATED_PATH) as f:
         updated = f.read()
         ls['updated'] = updated
+    return ls
+
+
+@app.route('/listings', methods=['GET'])
+def listings():
+    ls = get_listings()
     result = '{}'.format(ls)
     return jsonify(result)
 
 
-def scrape_notify():
+def notify():
+    movies = get_listings()
+    NOTIFIER.notify(movies)
+
+
+# TODO: POST
+@app.route('/notify', methods=['GET'])
+def notify_route():
+    status = 404
+    if request.args.get('key') == BMS_ADMIN:
+        if request.args.get('value') == BMS_ROOT:
+            movies = get_listings()
+            NOTIFIER.notify(movies)
+            status = 200
+    response = app.response_class(
+        status=status,
+    mimetype='application/json'
+    )
+    return response
+
+
+def scrape():
     listing_dates = SCRAPPER.get_listing_dates()
     movies = SCRAPPER.scrape(listing_dates, verbose=True, update=True)
 
     if len(movies):
         SCRAPPER.save_history()
-        #NOTIFIER.notify(movies)
-
+        notify()
 
 
 # schedule scraping operation
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=scrape_notify, trigger="interval", seconds=10)
+scheduler.add_job(func=scrape, trigger="interval", seconds=15)
 scheduler.start()
 # cleanup at app stop time
 atexit.register(lambda: scheduler.shutdown())
