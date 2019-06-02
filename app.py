@@ -44,13 +44,16 @@ def get_theaters():
     return jsonify(theaters)
 
 
+import json
 @app.route('/listings', methods=['GET'])
 def listings():
     with open(LISTINGS_PATH) as f:
         ls = f.read()
+        ls = json.loads(ls)
     with open(UPDATED_PATH) as f:
         updated = f.read()
-    result = '{}\n\n{}'.format(ls, updated)
+        ls['updated'] = updated
+    result = '{}'.format(ls)
     return jsonify(result)
 
 
