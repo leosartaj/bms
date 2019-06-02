@@ -20,8 +20,8 @@ UPDATED_PATH = '{}_updated.txt'.format(HISTORY_PATH)
 BMS_USER = os.environ['BMS_USER']
 BMS_PASS = os.environ['BMS_PASS']
 # authentication params for actions
-BMS_ADMIN = os.environ['BMS_ADMIN']
-BMS_ROOT = os.environ['BMS_ROOT']
+BMS_ADMIN = os.environ.get('BMS_ADMIN', None)
+BMS_ROOT = os.environ.get('BMS_ROOT', None)
 SCRAPPER = Scrapper(WATCHING_PATH, THEATERS_PATH, HISTORY_PATH)
 NOTIFIER = Notifier(EMAILS_PATH, BMS_USER, BMS_PASS)
 
@@ -73,8 +73,8 @@ def notify():
 @app.route('/notify', methods=['GET'])
 def notify_route():
     status = 404
-    if request.args.get('key') == BMS_ADMIN:
-        if request.args.get('value') == BMS_ROOT:
+    if BMS_ADMIN is None or request.args.get('key') == BMS_ADMIN:
+        if BMS_ROOT is None or request.args.get('value') == BMS_ROOT:
             movies = get_listings()
             NOTIFIER.notify(movies)
             status = 200
@@ -101,4 +101,4 @@ scheduler.start()
 # cleanup at app stop time
 atexit.register(lambda: scheduler.shutdown())
 
-app.run()
+app.run(host='0.0.0.0')

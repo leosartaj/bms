@@ -1,6 +1,7 @@
 email_list.txt
 theaters.txt
 movies.txt
+data/*
 .bms_history.csv
 .ipynb_checkpoints/*
 __pycache__/*
