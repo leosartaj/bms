@@ -28,12 +28,6 @@ def home():
     return "BMS notification service. (Version: Alpha)"
 
 
-@app.route('/emails', methods=['GET'])
-def get_emails():
-    emails = notifier.emails
-    return jsonify(emails)
-
-
 @app.route('/movies', methods=['GET'])
 def get_movies():
     watching = scrapper.watching
@@ -77,5 +71,4 @@ if __name__ == '__main__':
     # cleanup at app stop time
     atexit.register(lambda: scheduler.shutdown())
 
-    app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
     app.run()
