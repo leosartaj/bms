@@ -80,7 +80,7 @@ def notify_route():
             status = 200
     response = app.response_class(
         status=status,
-    mimetype='application/json'
+        mimetype='application/json'
     )
     return response
 
@@ -96,6 +96,7 @@ def scrape():
 
 # schedule scraping operation
 scheduler = BackgroundScheduler()
+# TODO: Interval
 scheduler.add_job(func=scrape, trigger="interval", seconds=15)
 scheduler.start()
 # cleanup at app stop time
